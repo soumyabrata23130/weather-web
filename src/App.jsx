@@ -65,9 +65,8 @@ export default function App() {
       meridiem = "midnight";
     }
 
-    return `${weekdays[today.getDay()]} ${today.getDate()} ${
-      months[today.getMonth()]
-    }, ${hours}:${minutes} ${meridiem}`;
+    return `${weekdays[today.getDay()]} ${today.getDate()} ${months[today.getMonth()]
+      }, ${hours}:${minutes} ${meridiem}`;
   };
 
   const search = async (e) => {
@@ -76,7 +75,7 @@ export default function App() {
       setInput("");
       setWeather({ ...weather, loading: true });
       const url = "https://api.openweathermap.org/data/2.5/weather";
-      const api_key = "643d74ed61652d0b3ac8bfe900c9b122";
+      const api_key = import.meta.env.VITE_WEATHER_API_KEY;
       await axios
         .get(url, {
           params: {
@@ -100,7 +99,7 @@ export default function App() {
 
   const fetchAQI = async (ilat, ilon) => {
     const url = "https://api.openweathermap.org/data/2.5/air_pollution";
-    const api_key = "643d74ed61652d0b3ac8bfe900c9b122";
+    const api_key = import.meta.env.VITE_WEATHER_API_KEY;
     await axios
       .get(url, {
         params: {

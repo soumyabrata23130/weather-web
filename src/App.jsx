@@ -11,7 +11,7 @@ export default function App() {
     error: false,
   });
 
-  const [aqi, setAQI] = useState({
+  const [pollution, setPollution] = useState({
     data: { list: [] },
     error: false,
   });
@@ -86,7 +86,7 @@ export default function App() {
         })
         .then((res) => {
           console.log("weather res", res);
-          fetchAQI(res.data.coord.lat, res.data.coord.lon);
+          fetchPollution(res.data.coord.lat, res.data.coord.lon);
           setWeather({ data: res.data, loading: false, error: false });
         })
         .catch((error) => {
@@ -97,7 +97,7 @@ export default function App() {
     }
   };
 
-  const fetchAQI = async (ilat, ilon) => {
+  const fetchPollution = async (ilat, ilon) => {
     const url = "https://api.openweathermap.org/data/2.5/air_pollution";
     const api_key = import.meta.env.VITE_WEATHER_API_KEY;
     await axios
@@ -109,41 +109,13 @@ export default function App() {
         },
       })
       .then((res) => {
-        console.log("AQI res", res);
-
-        let aqi_desc = "";
-
-        switch (res.data.list[0].main.aqi) {
-          case 1:
-            aqi_desc = "Good";
-            break;
-          case 2:
-            aqi_desc = "Fair";
-            break;
-          case 3:
-            aqi_desc = "Moderate";
-            break;
-          case 4:
-            aqi_desc = "Poor";
-            break;
-          case 5:
-            aqi_desc = "Very Poor";
-            break;
-          default:
-            aqi_desc = "Unknown";
-        }
-
-        /* in case if the above switch does not work */
-        if (aqi_desc === "") {
-          aqi_desc = "Unknown";
-        }
-
-        setAQI({ data: res.data, desc: aqi_desc, error: false });
+        console.log("Pollution res", res);
+        setPollution({ data: res.data, error: false });
       })
       .catch((error) => {
-        setAQI({ data: {}, desc: "", error: true });
+        setPollution({ data: {}, desc: "", error: true });
         setInput("");
-        console.log("AQI fetch error", error);
+        console.log("Pollution fetch error", error);
       });
   };
 
@@ -153,7 +125,7 @@ export default function App() {
       <div className="card p-4 rounded-lg" id="weather-card">
         <div className="flex flex-col flex-wrap justify-center">
           <input
-            className="px-1 rounded-md"
+            className="px-2 rounded-md"
             type="text"
             id="input"
             name="city"
@@ -178,50 +150,55 @@ export default function App() {
         )}
         {weather.error && <span>City not found!</span>}
         {weather && weather.data.main && (
-          <div>
-            <h2 className="font-bold text-2xl" id="city-name">
-              {weather.data.name}, {weather.data.sys.country}
-            </h2>
-            <p className="mb-2 text-sm" id="today">
-              {today()}
-            </p>
-            <div className="flex gap-5 items-center">
-              <div>
-                <div className="flex justify-center" id="icon">
-                  <img
-                    src={`https://openweathermap.org/img/wn/${weather.data.weather[0].icon}@2x.png`}
-                  />
+          <div className="flex flex-col items-center">
+            <div>
+              <h2 className="font-bold text-2xl" id="city-name">
+                {weather.data.name}, {weather.data.sys.country}
+              </h2>
+              <p id="today">
+                {today()}
+              </p>
+            </div>
+            <div className="flex items-center justify-center">
+              <img
+                src={`https://openweathermap.org/img/wn/${weather.data.weather[0].icon}@2x.png`}
+                id="icon"
+              />
+              <div className="flex gap-9">
+                <p className="font-medium text-5xl" id="temp">
+                  {Math.round(weather.data.main.temp)}<sup className="text-3xl">℃</sup> {/* Using Math.round to round the temperature */}
+                </p>
+                <div className="flex flex-col gap-1 text-left">
+                  <p className="font-semibold text-2xl" id="desc">
+                    {weather.data.weather[0].main}
+                  </p>
+                  <p id="feels">
+                    <span className="font-medium">Feels&nbsp;like</span> {weather.data.main.feels_like}℃
+                  </p>
                 </div>
-                <p className="font-bold text-xl" id="temp">
-                  {weather.data.main.temp}&nbsp;℃
-                </p>
-                <p className="font-semibold text-sm" id="desc">
-                  {weather.data.weather[0].main}
-                </p>
-                <p className="text-sm" id="feels">
-                  Feels like {weather.data.main.feels_like}&nbsp;℃
-                </p>
               </div>
-              <div className="flex-1 text-left">
-                {aqi &&
-                  Array.isArray(aqi.data?.list) &&
-                  aqi.data.list.length > 0 && (
-                    <p id="aqi">
-                      <b className="font-semibold">Air quality:</b> {aqi.desc}
-                    </p>
-                  )}
-                <p id="humidity">
-                  <b className="font-semibold">Humidity:</b>{" "}
-                  {weather.data.main.humidity}%
-                </p>
-                <p id="pressure">
-                  <b className="font-semibold">Pressure:</b>{" "}
-                  {weather.data.main.pressure}&nbsp;hPa
-                </p>
-                <p id="speed">
-                  <b className="font-semibold">Wind&nbsp;speed:</b>{" "}
-                  {weather.data.wind.speed}&nbsp;m/s
-                </p>
+            </div>
+            <div className="flex gap-6 flex-1 mx-6 text-left">
+              {pollution &&
+                Array.isArray(pollution.data?.list) &&
+                pollution.data.list.length > 0 && (
+                  <div className="flex-col" id="pollution">
+                    <b className="font-semibold text-sm">Air&nbsp;quality</b>
+                    <p className="text-lg">{pollution.data.list[0].main.aqi}</p>
+                  </div>
+                )
+              }
+              <div className="flex-col" id="humidity">
+                <b className="font-semibold text-sm">Humidity</b>
+                <p className="text-lg">{weather.data.main.humidity}%</p>
+              </div>
+              <div className="flex-col" id="pressure">
+                <b className="font-semibold text-sm">Pressure</b>
+                <p className="text-lg">{weather.data.main.pressure}&nbsp;hPa</p>
+              </div>
+              <div className="flex-col" id="speed">
+                <b className="font-semibold text-sm">Wind</b>
+                <p className="text-lg">{weather.data.wind.speed}&nbsp;m/s</p>
               </div>
             </div>
           </div>

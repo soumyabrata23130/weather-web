@@ -7,6 +7,7 @@ export default function App() {
   const [weather, setWeather] = useState({
     loading: false,
     data: {},
+    date: new Date(),
     desc: "",
     error: false,
   });
@@ -17,8 +18,28 @@ export default function App() {
     error: false,
   });
 
-  const today = () => {
-    const today = new Date();
+  const [forecast, setForecast] = useState({
+    data: { list: [] },
+    error: false,
+  });
+
+  const weekdays = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  // Function to format the date and time
+  // Returns a string in the format: "Weekday Day Month, Hour:Minute AM/PM"
+  // Example: "Monday 1 January, 12:30 PM"
+  const formatDate = (date) => {
+    if (isNaN(date.getTime())) {
+      return "Invalid date";
+    }
 
     const months = [
       "January",
@@ -34,39 +55,30 @@ export default function App() {
       "November",
       "December",
     ];
-    const weekdays = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
 
-    let hours = today.getHours();
-    if (today.getHours() > 12) {
+    let hours = date.getHours();
+    if (date.getHours() > 12) {
       hours -= 12;
-    } else if (today.getHours() === 0) {
+    } else if (date.getHours() === 0) {
       hours = 12;
     }
 
     let meridiem = "AM",
-      minutes = String(today.getMinutes());
+      minutes = String(date.getMinutes());
 
-    if (today.getMinutes() < 10) {
+    if (date.getMinutes() < 10) {
       minutes = "0" + minutes;
     }
 
-    if (today.getHours() >= 12 && minutes !== "00") {
+    if (date.getHours() >= 12 && minutes !== "00") {
       meridiem = "PM";
-    } else if (today.getHours() === 12 && minutes === "00") {
+    } else if (date.getHours() === 12 && minutes === "00") {
       meridiem = "noon";
-    } else if (today.getHours() === 0 && minutes === "00") {
+    } else if (date.getHours() === 0 && minutes === "00") {
       meridiem = "midnight";
     }
 
-    return `${weekdays[today.getDay()]} ${today.getDate()} ${months[today.getMonth()]
+    return `${weekdays[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]
       }, ${hours}:${minutes} ${meridiem}`;
   };
 
@@ -100,13 +112,16 @@ export default function App() {
           params: {
             q: input,
             units: "metric",
+            lang: "en",
             appid: api_key,
           },
         })
         .then((res) => {
           console.log("weather res", res);
+          // Fetch pollution data using the coordinates from the weather response
           fetchPollution(res.data.coord.lat, res.data.coord.lon);
-          setWeather({ data: res.data, loading: false, error: false });
+          setWeather({ data: res.data, date: new Date(res.data.dt * 1000), loading: false, error: false });
+          fetchForecast(input);
         })
         .catch((error) => {
           setWeather({ ...weather, data: {}, error: true });
@@ -140,10 +155,32 @@ export default function App() {
       });
   };
 
+  const fetchForecast = async (input) => {
+    const url = "https://api.openweathermap.org/data/2.5/forecast";
+    const api_key = import.meta.env.VITE_WEATHER_API_KEY;
+    await axios
+      .get(url, {
+        params: {
+          q: input,
+          units: "metric",
+          appid: api_key,
+        },
+      })
+      .then((res) => {
+        console.log("Forecast res", res);
+        setForecast({ data: res.data, error: false });
+      })
+      .catch((error) => {
+        setForecast({ data: {}, error: true });
+        setInput("");
+        console.log("Forecast fetch error", error);
+      });
+  };
+
   return (
-    <main className="flex flex-col items-center text-center">
-      <h1 className="font-bold my-4 text-3xl">Weather</h1>
-      <div className="card p-4 rounded-lg" id="weather-card">
+    <main className="flex flex-col gap-2 items-center text-center">
+      <h1 className="font-bold mb-2 mt-6 text-3xl" id="header">Weather</h1>
+      <div className="card p-4 rounded-lg">
         <div className="flex flex-col flex-wrap justify-center">
           <input
             className="px-2 rounded-md"
@@ -158,75 +195,188 @@ export default function App() {
           />
           <p id="input-error"></p>
         </div>
-        <hr className="my-1" />
-        <p id="output-error"></p>
-        {weather.loading && (
-          <img
-            id="loading"
-            src="https://upload.wikimedia.org/wikipedia/commons/7/7a/Ajax_loader_metal_512.gif"
-            alt="Please wait"
-            height={100}
-            width={100}
-          />
-        )}
-        {weather.error && <span>City not found!</span>}
-        {weather && weather.data.main && (
-          <div className="flex flex-col items-center justify-center gap-3">
-            <div>
-              <h2 className="font-bold text-2xl" id="city-name">
-                {weather.data.name}, {weather.data.sys.country}
-              </h2>
-              <p id="today">
-                {today()}
+      </div>
+      <p id="output-error"></p>
+      {weather.loading && (
+        <img
+          id="loading"
+          src="https://upload.wikimedia.org/wikipedia/commons/7/7a/Ajax_loader_metal_512.gif"
+          alt="Please wait"
+          height={100}
+          width={100}
+        />
+      )}
+      {weather.error && <span>City not found!</span>}
+      {weather && weather.data.main && (
+        <div className="card p-4 rounded-lg flex flex-col items-center justify-center gap-4">
+          <div>
+            <h2 className="font-bold text-2xl" id="city-name">
+              {weather.data.name}, {weather.data.sys.country}
+            </h2>
+            <p id="today">
+              {formatDate(weather.date)}
+            </p>
+          </div>
+          <div className="flex items-center">
+            <img
+              src={`https://openweathermap.org/img/wn/${weather.data.weather[0].icon}@2x.png`}
+              id="icon"
+            />
+            <div className="flex flex-col flex-1 gap-1 text-left">
+              <p className="font-medium text-5xl" id="temp">
+                {Math.round(weather.data.main.temp)}<sup className="text-3xl">℃</sup> {/* Using Math.round to round the temperature */}
+              </p>
+              <p className="text-2xl" id="desc">
+                {weather.data.weather[0].main}
               </p>
             </div>
-            <div className="flex items-center justify-center gap-15">
-              <div className="flex items-center">
+          </div>
+          <p className="flex gap-3 items-center justify-center" id="feels">
+            <b className="font-semibold">Feels&nbsp;like</b>
+            <span className="text-lg">{Math.round(weather.data.main.feels_like)}°</span>
+          </p>
+          <div className="flex flex-wrap gap-5 justify-center text-left">
+            <div className="flex-col" id="pollution">
+              <b className="font-semibold text-sm">Air&nbsp;quality</b>
+              <p className="text-lg">{pollution.aqi}</p>
+            </div>
+            <div className="flex-col" id="humidity">
+              <b className="font-semibold text-sm">Humidity</b>
+              <p className="text-lg">{weather.data.main.humidity}%</p>
+            </div>
+            <div className="flex-col" id="pressure">
+              <b className="font-semibold text-sm">Pressure</b>
+              <p className="text-lg">{weather.data.main.pressure}&nbsp;hPa</p>
+            </div>
+            <div className="flex-col" id="visibility">
+              <b className="font-semibold text-sm">Visibility</b>
+              <p className="text-lg">{weather.data.visibility / 1000}&nbsp;km</p>
+            </div>
+            <div className="flex-col" id="speed">
+              <b className="font-semibold text-sm">Wind</b>
+              <p className="text-lg">{weather.data.wind.speed}&nbsp;m/s</p>
+            </div>
+          </div>
+        </div>
+      )
+      }
+      {
+        forecast && forecast.data.list[0] && (
+          <div>
+            <h2 className="font-bold text-2xl my-2">Daily Forecast</h2>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <div className="card p-4 rounded-lg flex-col items-center">
+                <h3 className="font-semibold">{weekdays[weather.date.getDay()]}</h3>
                 <img
                   src={`https://openweathermap.org/img/wn/${weather.data.weather[0].icon}@2x.png`}
-                  id="icon"
+                  height={80}
+                  width={80}
                 />
-                <div className="flex flex-col flex-1 gap-1 text-left">
-                  <p className="font-medium text-5xl" id="temp">
-                    {Math.round(weather.data.main.temp)}<sup className="text-3xl">℃</sup> {/* Using Math.round to round the temperature */}
-                  </p>
-                  <p className="text-2xl" id="desc">
-                    {weather.data.weather[0].main}
-                  </p>
+                <div className="flex gap-6 justify-center text-left">
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Max</b>
+                    <p className="text-xl">{Math.round(weather.data.main.temp_max)}°</p>
+                  </div>
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Min</b>
+                    <p className="text-xl">{Math.round(weather.data.main.temp_min)}°</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-6 flex-1 text-left">
-                <div className="flex-col" id="feels">
-                  <b className="font-semibold text-lg">Feels&nbsp;like</b>
-                  <p className="text-2xl">{weather.data.main.feels_like}℃</p>
+              <div className="card p-4 rounded-lg flex-col items-center">
+                <h3 className="font-semibold">{weekdays[weather.date.getDay() + 1]}</h3>
+                <img
+                  src={`https://openweathermap.org/img/wn/${forecast.data.list[7].weather[0].icon}@2x.png`}
+                  height={80}
+                  width={80}
+                />
+                <div className="flex gap-6 justify-center text-left">
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Max</b>
+                    <p className="text-xl">{Math.round(forecast.data.list[7].main.temp_max)}°</p>
+                  </div>
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Min</b>
+                    <p className="text-xl">{Math.round(forecast.data.list[7].main.temp_min)}°</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex gap-6 flex-1 mx-7 text-left">
-              <div className="flex-col" id="pollution">
-                <b className="font-semibold text-sm">Air&nbsp;quality</b>
-                <p className="text-lg">{pollution.aqi}</p>
+              <div className="card p-4 rounded-lg flex-col items-center">
+                <h3 className="font-semibold">{weekdays[weather.date.getDay() + 2]}</h3>
+                <img
+                  src={`https://openweathermap.org/img/wn/${forecast.data.list[15].weather[0].icon}@2x.png`}
+                  height={80}
+                  width={80}
+                />
+                <div className="flex gap-6 justify-center text-left">
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Max</b>
+                    <p className="text-xl">{Math.round(forecast.data.list[15].main.temp_max)}°</p>
+                  </div>
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Min</b>
+                    <p className="text-xl">{Math.round(forecast.data.list[15].main.temp_min)}°</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex-col" id="humidity">
-                <b className="font-semibold text-sm">Humidity</b>
-                <p className="text-lg">{weather.data.main.humidity}%</p>
+              <div className="card p-4 rounded-lg flex-col items-center">
+                <h3 className="font-semibold">{weekdays[weather.date.getDay() + 3]}</h3>
+                <img
+                  src={`https://openweathermap.org/img/wn/${forecast.data.list[23].weather[0].icon}@2x.png`}
+                  height={80}
+                  width={80}
+                />
+                <div className="flex gap-6 justify-center text-left">
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Max</b>
+                    <p className="text-xl">{Math.round(forecast.data.list[23].main.temp_max)}°</p>
+                  </div>
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Min</b>
+                    <p className="text-xl">{Math.round(forecast.data.list[23].main.temp_min)}°</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex-col" id="pressure">
-                <b className="font-semibold text-sm">Pressure</b>
-                <p className="text-lg">{weather.data.main.pressure}&nbsp;hPa</p>
+              <div className="card p-4 rounded-lg flex-col items-center">
+                <h3 className="font-semibold">{weekdays[weather.date.getDay() + 4]}</h3>
+                <img
+                  src={`https://openweathermap.org/img/wn/${forecast.data.list[31].weather[0].icon}@2x.png`}
+                  height={80}
+                  width={80}
+                />
+                <div className="flex gap-6 justify-center text-left">
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Max</b>
+                    <p className="text-xl">{Math.round(forecast.data.list[31].main.temp_max)}°</p>
+                  </div>
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Min</b>
+                    <p className="text-xl">{Math.round(forecast.data.list[31].main.temp_min)}°</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex-col" id="visibility">
-                <b className="font-semibold text-sm">Visibility</b>
-                <p className="text-lg">{weather.data.visibility / 1000}&nbsp;km</p>
-              </div>
-              <div className="flex-col" id="speed">
-                <b className="font-semibold text-sm">Wind</b>
-                <p className="text-lg">{weather.data.wind.speed}&nbsp;m/s</p>
+              <div className="card p-4 rounded-lg flex-col items-center">
+                <h3 className="font-semibold">{weekdays[weather.date.getDay() + 5]}</h3>
+                <img
+                  src={`https://openweathermap.org/img/wn/${forecast.data.list[39].weather[0].icon}@2x.png`}
+                  height={80}
+                  width={80}
+                />
+                <div className="flex gap-6 justify-center text-left">
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Max</b>
+                    <p className="text-xl">{Math.round(forecast.data.list[39].main.temp_max)}°</p>
+                  </div>
+                  <div className="flex-col">
+                    <b className="font-semibold text-xs">Min</b>
+                    <p className="text-xl">{Math.round(forecast.data.list[39].main.temp_min)}°</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        )}
-      </div>
-    </main>
+        )
+      }
+    </main >
   );
 }

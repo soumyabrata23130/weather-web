@@ -32,7 +32,7 @@ export default function App() {
   }
 
   return (
-    <footer className="text-center">
+    <footer className="mt-3 text-center">
       <label className="theme-select text-sm">
         Select theme:
         <select

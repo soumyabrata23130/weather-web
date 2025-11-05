@@ -257,7 +257,7 @@ export default function App() {
           </p>
           <div className="flex flex-wrap gap-5 justify-center text-left">
             <div className="flex-col" id="pollution">
-              <b className="font-semibold text-sm">Air&nbsp;quality</b>
+              <b className="font-semibold text-sm">Air quality (PM10)</b>
               <p className="text-lg">{pollution.aqi}</p>
             </div>
             <div className="flex-col" id="humidity">

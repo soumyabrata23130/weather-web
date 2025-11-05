@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import Forecast from "./Forecast.jsx";
 
 export default function App() {
   const [input, setInput] = useState("");
@@ -284,114 +285,42 @@ export default function App() {
           <div>
             <h2 className="font-bold text-2xl my-2">Daily Forecast</h2>
             <div className="flex flex-wrap gap-4 justify-center">
-              <div className="card p-4 rounded-lg flex-col items-center">
-                <h3 className="font-semibold">{weekdays[weather.date.getDay()]}</h3>
-                <img
-                  src={`https://openweathermap.org/img/wn/${weather.data.weather[0].icon}@2x.png`}
-                  height={80}
-                  width={80}
-                />
-                <div className="flex gap-6 justify-center text-left">
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Max</b>
-                    <p className="text-xl">{Math.round(weather.data.main.temp_max)}°</p>
-                  </div>
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Min</b>
-                    <p className="text-xl">{Math.round(weather.data.main.temp_min)}°</p>
-                  </div>
-                </div>
-              </div>
-              <div className="card p-4 rounded-lg flex-col items-center">
-                <h3 className="font-semibold">{weekdays[weather.date.getDay() + 1]}</h3>
-                <img
-                  src={`https://openweathermap.org/img/wn/${forecast.data.list[7].weather[0].icon}@2x.png`}
-                  height={80}
-                  width={80}
-                />
-                <div className="flex gap-6 justify-center text-left">
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Max</b>
-                    <p className="text-xl">{Math.round(forecast.data.list[7].main.temp_max)}°</p>
-                  </div>
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Min</b>
-                    <p className="text-xl">{Math.round(forecast.data.list[7].main.temp_min)}°</p>
-                  </div>
-                </div>
-              </div>
-              <div className="card p-4 rounded-lg flex-col items-center">
-                <h3 className="font-semibold">{weekdays[weather.date.getDay() + 2]}</h3>
-                <img
-                  src={`https://openweathermap.org/img/wn/${forecast.data.list[15].weather[0].icon}@2x.png`}
-                  height={80}
-                  width={80}
-                />
-                <div className="flex gap-6 justify-center text-left">
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Max</b>
-                    <p className="text-xl">{Math.round(forecast.data.list[15].main.temp_max)}°</p>
-                  </div>
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Min</b>
-                    <p className="text-xl">{Math.round(forecast.data.list[15].main.temp_min)}°</p>
-                  </div>
-                </div>
-              </div>
-              <div className="card p-4 rounded-lg flex-col items-center">
-                <h3 className="font-semibold">{weekdays[weather.date.getDay() + 3]}</h3>
-                <img
-                  src={`https://openweathermap.org/img/wn/${forecast.data.list[23].weather[0].icon}@2x.png`}
-                  height={80}
-                  width={80}
-                />
-                <div className="flex gap-6 justify-center text-left">
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Max</b>
-                    <p className="text-xl">{Math.round(forecast.data.list[23].main.temp_max)}°</p>
-                  </div>
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Min</b>
-                    <p className="text-xl">{Math.round(forecast.data.list[23].main.temp_min)}°</p>
-                  </div>
-                </div>
-              </div>
-              <div className="card p-4 rounded-lg flex-col items-center">
-                <h3 className="font-semibold">{weekdays[weather.date.getDay() + 4]}</h3>
-                <img
-                  src={`https://openweathermap.org/img/wn/${forecast.data.list[31].weather[0].icon}@2x.png`}
-                  height={80}
-                  width={80}
-                />
-                <div className="flex gap-6 justify-center text-left">
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Max</b>
-                    <p className="text-xl">{Math.round(forecast.data.list[31].main.temp_max)}°</p>
-                  </div>
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Min</b>
-                    <p className="text-xl">{Math.round(forecast.data.list[31].main.temp_min)}°</p>
-                  </div>
-                </div>
-              </div>
-              <div className="card p-4 rounded-lg flex-col items-center">
-                <h3 className="font-semibold">{weekdays[weather.date.getDay() + 5]}</h3>
-                <img
-                  src={`https://openweathermap.org/img/wn/${forecast.data.list[39].weather[0].icon}@2x.png`}
-                  height={80}
-                  width={80}
-                />
-                <div className="flex gap-6 justify-center text-left">
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Max</b>
-                    <p className="text-xl">{Math.round(forecast.data.list[39].main.temp_max)}°</p>
-                  </div>
-                  <div className="flex-col">
-                    <b className="font-semibold text-xs">Min</b>
-                    <p className="text-xl">{Math.round(forecast.data.list[39].main.temp_min)}°</p>
-                  </div>
-                </div>
-              </div>
+              <Forecast
+                weekday={weather.date.getDay()}
+                icon={weather.data.weather[0].icon}
+                temp_max={weather.data.main.temp_max}
+                temp_min={weather.data.main.temp_min}
+              />
+              <Forecast
+                weekday={(weather.date.getDay() + 1) % 7}
+                icon={forecast.data.list[7].weather[0].icon}
+                temp_max={forecast.data.list[7].main.temp_max}
+                temp_min={forecast.data.list[7].main.temp_min}
+              />
+              <Forecast
+                weekday={(weather.date.getDay() + 2) % 7}
+                icon={forecast.data.list[15].weather[0].icon}
+                temp_max={forecast.data.list[15].main.temp_max}
+                temp_min={forecast.data.list[15].main.temp_min}
+              />
+              <Forecast
+                weekday={(weather.date.getDay() + 3) % 7}
+                icon={forecast.data.list[23].weather[0].icon}
+                temp_max={forecast.data.list[23].main.temp_max}
+                temp_min={forecast.data.list[23].main.temp_min}
+              />
+              <Forecast
+                weekday={(weather.date.getDay() + 4) % 7}
+                icon={forecast.data.list[31].weather[0].icon}
+                temp_max={forecast.data.list[31].main.temp_max}
+                temp_min={forecast.data.list[31].main.temp_min}
+              />
+              <Forecast
+                weekday={(weather.date.getDay() + 5) % 7}
+                icon={forecast.data.list[39].weather[0].icon}
+                temp_max={forecast.data.list[39].main.temp_max}
+                temp_min={forecast.data.list[39].main.temp_min}
+              />
             </div>
           </div>
         )

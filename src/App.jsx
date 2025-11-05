@@ -83,21 +83,21 @@ export default function App() {
       }, ${hours}:${minutes} ${meridiem}`;
   };
 
-  const calculateAQI_PM25 = (pm25) => {
+  const calculateAQI = (pm10) => {
     const breakpoints = [
-      { cLow: 0.0, cHigh: 9.0, iLow: 0, iHigh: 50 },
-      { cLow: 9.1, cHigh: 35.4, iLow: 51, iHigh: 100 },
-      { cLow: 35.5, cHigh: 55.4, iLow: 101, iHigh: 150 },
-      { cLow: 55.5, cHigh: 125.4, iLow: 151, iHigh: 200 },
-      { cLow: 125.5, cHigh: 225.4, iLow: 201, iHigh: 300 },
-      { cLow: 225.5, cHigh: 325.4, iLow: 301, iHigh: 500 },
+      { cLow: 0, cHigh: 54, iLow: 0, iHigh: 50 },
+      { cLow: 55, cHigh: 154, iLow: 51, iHigh: 100 },
+      { cLow: 155, cHigh: 254, iLow: 101, iHigh: 150 },
+      { cLow: 255, cHigh: 354, iLow: 151, iHigh: 200 },
+      { cLow: 355, cHigh: 424, iLow: 201, iHigh: 300 },
+      { cLow: 425, cHigh: 604, iLow: 301, iHigh: 500 },
     ];
 
-    const bp = breakpoints.find(b => pm25 >= b.cLow && pm25 <= b.cHigh);
+    const bp = breakpoints.find(b => pm10 >= b.cLow && pm10 <= b.cHigh);
     if (!bp) return 500; // clamp to max
 
     const { cLow, cHigh, iLow, iHigh } = bp;
-    const aqi = ((iHigh - iLow) / (cHigh - cLow)) * (pm25 - cLow) + iLow;
+    const aqi = ((iHigh - iLow) / (cHigh - cLow)) * (pm10 - cLow) + iLow;
     return Math.round(aqi);
   }
 
@@ -158,7 +158,7 @@ export default function App() {
       })
       .then((res) => {
         console.log("Pollution res", res);
-        let aqi = calculateAQI_PM25(res.data.list[0].components.pm2_5);
+        let aqi = calculateAQI(res.data.list[0].components.pm10);
         console.log("AQI:", aqi);
         setPollution({ data: res.data, aqi: aqi, error: false });
       })

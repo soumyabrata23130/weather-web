@@ -100,37 +100,50 @@ export default function App() {
     return Math.round(aqi);
   }
 
-  const search = async (e) => {
+  // Handle Enter key press in input field
+  const handleEnter = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      setInput("");
-      setWeather({ ...weather, loading: true });
-      const url = "https://api.openweathermap.org/data/2.5/weather";
-      const api_key = import.meta.env.VITE_WEATHER_API_KEY;
-      await axios
-        .get(url, {
-          params: {
-            q: input,
-            units: "metric",
-            lang: "en",
-            appid: api_key,
-          },
-        })
-        .then((res) => {
-          console.log("weather res", res);
-          // Fetch pollution data using the coordinates from the weather response
-          fetchPollution(res.data.coord.lat, res.data.coord.lon);
-          setWeather({ data: res.data, date: new Date(res.data.dt * 1000), loading: false, error: false });
-          fetchForecast(input);
-        })
-        .catch((error) => {
-          setWeather({ ...weather, data: {}, error: true });
-          setInput("");
-          console.log("weather fetch error", error);
-        });
+      search();
     }
+  }
+
+  // Handle form submission
+  function handleSubmit(e) {
+    e.preventDefault();
+    search();
+  }
+
+  // Search for weather data
+  async function search() {
+    setInput("");
+    setWeather({ ...weather, loading: true });
+    const url = "https://api.openweathermap.org/data/2.5/weather";
+    const api_key = import.meta.env.VITE_WEATHER_API_KEY;
+    await axios
+      .get(url, {
+        params: {
+          q: input,
+          units: "metric",
+          lang: "en",
+          appid: api_key,
+        },
+      })
+      .then((res) => {
+        console.log("weather res", res);
+        // Fetch pollution data using the coordinates from the weather response
+        fetchPollution(res.data.coord.lat, res.data.coord.lon);
+        setWeather({ data: res.data, date: new Date(res.data.dt * 1000), loading: false, error: false });
+        fetchForecast(input);
+      })
+      .catch((error) => {
+        setWeather({ ...weather, data: {}, error: true });
+        setInput("");
+        console.log("weather fetch error", error);
+      });
   };
 
+  // Fetch pollution data
   const fetchPollution = async (ilat, ilon) => {
     const url = "https://api.openweathermap.org/data/2.5/air_pollution";
     const api_key = import.meta.env.VITE_WEATHER_API_KEY;
@@ -155,6 +168,7 @@ export default function App() {
       });
   };
 
+  // Fetch forecast data
   const fetchForecast = async (input) => {
     const url = "https://api.openweathermap.org/data/2.5/forecast";
     const api_key = import.meta.env.VITE_WEATHER_API_KEY;
@@ -180,22 +194,27 @@ export default function App() {
   return (
     <main className="flex flex-col gap-2 items-center text-center">
       <h1 className="font-bold mb-2 mt-6 text-3xl" id="header">Weather</h1>
-      <div className="card p-4 rounded-lg">
+      <form className="card p-4 rounded-lg" onSubmit={handleSubmit}>
         <div className="flex flex-col flex-wrap justify-center">
-          <input
-            className="px-2 rounded-md"
-            type="text"
-            id="input"
-            name="city"
-            placeholder="Enter a city"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyUp={search}
-            required
-          />
+          <div className="flex flex-wrap gap-2 items-center justify-center">
+            <input
+              className="px-2 rounded-md"
+              type="text"
+              inputMode="search"
+              enterKeyHint="search"
+              id="input"
+              name="city"
+              placeholder="Enter a city"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleEnter}
+              required
+            />
+            <button type="submit">Get Weather</button>
+          </div>
           <p id="input-error"></p>
         </div>
-      </div>
+      </form>
       <p id="output-error"></p>
       {weather.loading && (
         <img

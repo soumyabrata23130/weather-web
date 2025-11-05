@@ -60,7 +60,7 @@ button {
   background: var(--button);
   border-radius: var(--radius-lg);
   display: block;
-  padding: 0.6rem 1rem;
+  padding: 0.5rem;
 }
 
 button:hover {

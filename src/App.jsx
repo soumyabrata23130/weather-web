@@ -1,6 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
 import Forecast from "./Forecast.jsx";
+import WeatherCard from "./WeatherCard.jsx";
+import { calculateAQI } from "./utils";
 
 export default function App() {
   const [input, setInput] = useState("");
@@ -23,83 +25,6 @@ export default function App() {
     data: { list: [] },
     error: false,
   });
-
-  const weekdays = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-
-  // Function to format the date and time
-  // Returns a string in the format: "Weekday Day Month, Hour:Minute AM/PM"
-  // Example: "Monday 1 January, 12:30 PM"
-  const formatDate = (date) => {
-    if (isNaN(date.getTime())) {
-      return "Invalid date";
-    }
-
-    const months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-
-    let hours = date.getHours();
-    if (date.getHours() > 12) {
-      hours -= 12;
-    } else if (date.getHours() === 0) {
-      hours = 12;
-    }
-
-    let meridiem = "AM",
-      minutes = String(date.getMinutes());
-
-    if (date.getMinutes() < 10) {
-      minutes = "0" + minutes;
-    }
-
-    if (date.getHours() >= 12 && minutes !== "00") {
-      meridiem = "PM";
-    } else if (date.getHours() === 12 && minutes === "00") {
-      meridiem = "noon";
-    } else if (date.getHours() === 0 && minutes === "00") {
-      meridiem = "midnight";
-    }
-
-    return `${weekdays[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]
-      }, ${hours}:${minutes} ${meridiem}`;
-  };
-
-  const calculateAQI = (pm10) => {
-    const breakpoints = [
-      { cLow: 0, cHigh: 54, iLow: 0, iHigh: 50 },
-      { cLow: 55, cHigh: 154, iLow: 51, iHigh: 100 },
-      { cLow: 155, cHigh: 254, iLow: 101, iHigh: 150 },
-      { cLow: 255, cHigh: 354, iLow: 151, iHigh: 200 },
-      { cLow: 355, cHigh: 424, iLow: 201, iHigh: 300 },
-      { cLow: 425, cHigh: 604, iLow: 301, iHigh: 500 },
-    ];
-
-    const bp = breakpoints.find(b => pm10 >= b.cLow && pm10 <= b.cHigh);
-    if (!bp) return 500; // clamp to max
-
-    const { cLow, cHigh, iLow, iHigh } = bp;
-    const aqi = ((iHigh - iLow) / (cHigh - cLow)) * (pm10 - cLow) + iLow;
-    return Math.round(aqi);
-  }
 
   // Handle Enter key press in input field
   const handleEnter = (e) => {
@@ -227,100 +152,27 @@ export default function App() {
         />
       )}
       {weather.error && <span>City not found!</span>}
-      {weather && weather.data.main && (
-        <div className="card p-4 rounded-lg flex flex-col items-center justify-center gap-4">
-          <div>
-            <h2 className="font-bold text-2xl" id="city-name">
-              {weather.data.name}, {weather.data.sys.country}
-            </h2>
-            <p id="today">
-              {formatDate(weather.date)}
-            </p>
-          </div>
-          <div className="flex items-center">
-            <img
-              src={`https://openweathermap.org/img/wn/${weather.data.weather[0].icon}@2x.png`}
-              id="icon"
-            />
-            <div className="flex flex-col flex-1 gap-1 text-left">
-              <p className="font-medium text-5xl" id="temp">
-                {Math.round(weather.data.main.temp)}<sup className="text-3xl">℃</sup> {/* Using Math.round to round the temperature */}
-              </p>
-              <p className="text-2xl" id="desc">
-                {weather.data.weather[0].main}
-              </p>
-            </div>
-          </div>
-          <p className="flex gap-3 items-center justify-center" id="feels">
-            <b className="font-semibold">Feels&nbsp;like</b>
-            <span className="text-lg">{Math.round(weather.data.main.feels_like)}°</span>
-          </p>
-          <div className="flex flex-wrap gap-5 justify-center text-left">
-            <div className="flex-col" id="pollution">
-              <b className="font-semibold text-sm">Air quality (PM10)</b>
-              <p className="text-lg">{pollution.aqi}</p>
-            </div>
-            <div className="flex-col" id="humidity">
-              <b className="font-semibold text-sm">Humidity</b>
-              <p className="text-lg">{weather.data.main.humidity}%</p>
-            </div>
-            <div className="flex-col" id="pressure">
-              <b className="font-semibold text-sm">Pressure</b>
-              <p className="text-lg">{weather.data.main.pressure}&nbsp;hPa</p>
-            </div>
-            <div className="flex-col" id="visibility">
-              <b className="font-semibold text-sm">Visibility</b>
-              <p className="text-lg">{weather.data.visibility / 1000}&nbsp;km</p>
-            </div>
-            <div className="flex-col" id="speed">
-              <b className="font-semibold text-sm">Wind</b>
-              <p className="text-lg">{weather.data.wind.speed}&nbsp;m/s</p>
-            </div>
-          </div>
-        </div>
-      )
-      }
+
+      <WeatherCard weather={weather} pollution={pollution} />
+
       {
-        forecast && forecast.data.list[0] && (
+        forecast && forecast.data.list && forecast.data.list.length > 0 && (
           <div>
             <h2 className="font-bold text-2xl my-2">Daily Forecast</h2>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Forecast
-                weekday={weather.date.getDay()}
-                icon={weather.data.weather[0].icon}
-                temp_max={weather.data.main.temp_max}
-                temp_min={weather.data.main.temp_min}
-              />
-              <Forecast
-                weekday={(weather.date.getDay() + 1) % 7}
-                icon={forecast.data.list[7].weather[0].icon}
-                temp_max={forecast.data.list[7].main.temp_max}
-                temp_min={forecast.data.list[7].main.temp_min}
-              />
-              <Forecast
-                weekday={(weather.date.getDay() + 2) % 7}
-                icon={forecast.data.list[15].weather[0].icon}
-                temp_max={forecast.data.list[15].main.temp_max}
-                temp_min={forecast.data.list[15].main.temp_min}
-              />
-              <Forecast
-                weekday={(weather.date.getDay() + 3) % 7}
-                icon={forecast.data.list[23].weather[0].icon}
-                temp_max={forecast.data.list[23].main.temp_max}
-                temp_min={forecast.data.list[23].main.temp_min}
-              />
-              <Forecast
-                weekday={(weather.date.getDay() + 4) % 7}
-                icon={forecast.data.list[31].weather[0].icon}
-                temp_max={forecast.data.list[31].main.temp_max}
-                temp_min={forecast.data.list[31].main.temp_min}
-              />
-              <Forecast
-                weekday={(weather.date.getDay() + 5) % 7}
-                icon={forecast.data.list[39].weather[0].icon}
-                temp_max={forecast.data.list[39].main.temp_max}
-                temp_min={forecast.data.list[39].main.temp_min}
-              />
+              {[0, 7, 15, 23, 31, 39].map((index, i) => {
+                const item = forecast.data.list[index];
+                if (!item) return null;
+                return (
+                  <Forecast
+                    key={i}
+                    weekday={(weather.date.getDay() + i) % 7}
+                    icon={item.weather[0].icon}
+                    temp_max={item.main.temp_max}
+                    temp_min={item.main.temp_min}
+                  />
+                );
+              })}
             </div>
           </div>
         )
